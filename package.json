@@ -5,8 +5,10 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "start": "node server.js",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
+    "build": "webpack --mode production",
     "watch": "nodemon db --ignore frontend-js --ignore public/ & webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
