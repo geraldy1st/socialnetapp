@@ -1,46 +1,74 @@
 <%- include('includes/header') %>
 
-<div class="container py-md-5 container--narrow">
-  <%- include('includes/flash') %>
+<main class="page-main">
+  <div class="container--narrow">
+    <%- include('includes/flash') %>
 
-  <a class="small font-weight-bold" href="/post/<%= post._id %>"
-    >&laquo; Back to post permalink</a
-  >
+    <a class="small text-muted d-inline-block mb-3" href="/post/<%= post._id %>"
+      >&larr; Retour au post</a
+    >
 
-  <form class="mt-3" action="/post/<%= post._id %>/edit" method="POST">
-    <div class="form-group">
-      <label for="post-title" class="text-muted mb-1"
-        ><small>Title</small></label
-      >
-      <input
-        required
-        name="title"
-        value="<%= post.title %>"
-        id="post-title"
-        class="form-control form-control-lg form-control-title"
-        type="text"
-        placeholder=""
-        autocomplete="off"
-      />
+    <div class="form-card">
+      <h2 class="h5 font-weight-bold mb-4">Modifier la publication</h2>
+      <form action="/post/<%= post._id %>/edit" method="POST">
+        <div class="form-group">
+          <label for="post-title">Titre</label>
+          <input
+            required
+            name="title"
+            value="<%= post.title %>"
+            id="post-title"
+            class="form-control form-control-title"
+            type="text"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="post-body">Contenu</label>
+          <textarea
+            required
+            name="body"
+            id="post-body"
+            class="body-content tall-textarea form-control"
+          ><%= post.body %></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Visibilité</label>
+          <div class="visibility-options">
+            <label class="visibility-option">
+              <input
+                type="radio"
+                name="visibility"
+                value="public"
+                <%= post.visibility !== 'private' ? 'checked' : '' %>
+              />
+              <span class="visibility-option__content">
+                <strong>Public</strong>
+                <small>Visible par tous, y compris les personnes qui ne vous suivent pas</small>
+              </span>
+            </label>
+            <label class="visibility-option">
+              <input
+                type="radio"
+                name="visibility"
+                value="private"
+                <%= post.visibility === 'private' ? 'checked' : '' %>
+              />
+              <span class="visibility-option__content">
+                <strong>Privé</strong>
+                <small>Visible uniquement par vos abonnés</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button type="submit" class="btn btn-instagram">Enregistrer</button>
+      </form>
     </div>
+  </div>
+</main>
 
-    <div class="form-group">
-      <label for="post-body" class="text-muted mb-1"
-        ><small>Body Content</small></label
-      >
-      <textarea
-        required
-        name="body"
-        id="post-body"
-        class="body-content tall-textarea form-control"
-        type="text"
-      >
-<%= post.body %></textarea
-      >
-    </div>
-
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-    <button class="btn btn-primary">Save Update</button>
-  </form>
-</div>
 <%- include('includes/footer') %>

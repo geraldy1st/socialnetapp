@@ -1,0 +1,135 @@
+<%- include('includes/header') %>
+
+<main class="page-main">
+  <div class="container--narrow">
+    <%- include('includes/flash') %>
+
+    <a class="small text-muted d-inline-block mb-3" href="/profile/<%= profileUser.username %>"
+      >&larr; Retour au profil</a
+    >
+
+    <div class="form-card">
+      <h2 class="h5 font-weight-bold mb-2">Modifier le profil</h2>
+      <p class="profile-edit-note">
+        Par défaut, votre photo provient de
+        <a href="https://fr.gravatar.com/" target="_blank" rel="noopener" class="interactive-link"
+          >Gravatar</a
+        >
+        selon votre e-mail. Vous pouvez aussi téléverser une photo personnalisée.
+      </p>
+
+      <form
+        id="profile-edit-form"
+        action="/profile/<%= profileUser.username %>/edit"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="profile-edit-avatar">
+          <img
+            id="avatar-preview"
+            src="<%= profileUser.avatar %>"
+            alt="<%= profileUser.username %>"
+          />
+          <div class="profile-edit-avatar__info">
+            <strong><%= profileUser.username %></strong>
+            <div class="text-muted small"><%= profileUser.email %></div>
+            <span class="profile-edit-avatar__badge">
+              <%= profileUser.hasCustomAvatar ? 'Photo personnalisée' : 'Gravatar' %>
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="avatar-upload">Photo de profil</label>
+          <input
+            type="file"
+            name="avatar"
+            id="avatar-upload"
+            class="form-control-file profile-edit-file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+          />
+          <small class="text-muted d-block mt-1"
+            >JPG, PNG, GIF ou WebP — 2 Mo maximum.</small
+          >
+        </div>
+
+        <% if (profileUser.hasCustomAvatar) { %>
+        <button type="button" class="btn btn-instagram-outline btn-sm mb-3" id="use-gravatar-btn">
+          Revenir à Gravatar
+        </button>
+        <% } %>
+
+        <input type="hidden" name="useGravatar" id="use-gravatar" value="false" />
+
+        <div class="form-group">
+          <label for="username-edit">Nom d'utilisateur</label>
+          <input
+            required
+            name="username"
+            id="username-edit"
+            class="form-control"
+            type="text"
+            value="<%= profileUser.username %>"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email-edit">E-mail</label>
+          <input
+            required
+            name="email"
+            id="email-edit"
+            class="form-control"
+            type="email"
+            value="<%= profileUser.email %>"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password-edit">Nouveau mot de passe</label>
+          <input
+            name="password"
+            id="password-edit"
+            class="form-control"
+            type="password"
+            placeholder="Laisser vide pour ne pas changer"
+          />
+          <small class="text-muted">12 caractères minimum si vous le modifiez.</small>
+        </div>
+
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button type="submit" class="btn btn-instagram">Enregistrer</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var fileInput = document.getElementById('avatar-upload');
+    var preview = document.getElementById('avatar-preview');
+    var gravatarBtn = document.getElementById('use-gravatar-btn');
+    var gravatarField = document.getElementById('use-gravatar');
+    var form = document.getElementById('profile-edit-form');
+
+    if (fileInput && preview) {
+      fileInput.addEventListener('change', function () {
+        if (!fileInput.files || !fileInput.files[0]) return;
+        preview.src = URL.createObjectURL(fileInput.files[0]);
+        if (gravatarField) gravatarField.value = 'false';
+      });
+    }
+
+    if (gravatarBtn && gravatarField && form) {
+      gravatarBtn.addEventListener('click', function () {
+        gravatarField.value = 'true';
+        if (fileInput) fileInput.value = '';
+        form.submit();
+      });
+    }
+  })();
+</script>
+
+<%- include('includes/footer') %>

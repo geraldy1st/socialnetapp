@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 exports.apiGetPostsByUsername = async function(req, res) {
   try {
     let authorDoc = await User.findByUsername(req.params.username);
-    let posts = await Post.findByAuthorId(authorDoc._id);
+    let posts = await Post.findByAuthorId(authorDoc._id, 0);
     res.json(posts);
   } catch {
     res.json('Sorry, invalid user requested.');
@@ -51,7 +51,10 @@ exports.sharedProfileData = async function(req, res, next) {
   req.isVisitorsProfile = isVisitorsProfile;
   req.isFollowing = isFollowing;
   // retrieve post, follower, and following counts
-  let postCountPromise = Post.countPostsByAuthor(req.profileUser._id);
+  let postCountPromise = Post.countPostsByAuthor(
+    req.profileUser._id,
+    req.visitorId
+  );
   let followerCountPromise = Follow.countFollowersById(req.profileUser._id);
   let followingCountPromise = Follow.countFollowingById(req.profileUser._id);
   let [postCount, followerCount, followingCount] = await Promise.all([
@@ -122,6 +125,18 @@ exports.logout = function(req, res) {
   });
 };
 
+exports.viewRegisterScreen = function(req, res) {
+  if (req.session.user) {
+    res.redirect('/');
+    return;
+  }
+
+  res.render('register', {
+    title: 'Inscription',
+    regErrors: req.flash('regErrors')
+  });
+};
+
 exports.register = function(req, res) {
   let user = new User(req.body);
   user
@@ -141,18 +156,19 @@ exports.register = function(req, res) {
         req.flash('regErrors', error);
       });
       req.session.save(function() {
-        res.redirect('/');
+        res.redirect('/register');
       });
     });
 };
 
 exports.home = async function(req, res) {
+  const visitorId = req.session.user ? req.session.user._id : 0;
+  let posts = await Post.getHomeFeed(visitorId);
+
   if (req.session.user) {
-    // fetch feed of posts for current user
-    let posts = await Post.getFeed(req.session.user._id);
     res.render('home-dashboard', { posts: posts });
   } else {
-    res.render('home-guest', { regErrors: req.flash('regErrors') });
+    res.render('home-guest', { posts: posts });
   }
 };
 
@@ -169,7 +185,7 @@ exports.ifUserExists = function(req, res, next) {
 
 exports.profilePostsScreen = function(req, res) {
   // ask our post model for posts by a certain author id
-  Post.findByAuthorId(req.profileUser._id)
+  Post.findByAuthorId(req.profileUser._id, req.visitorId)
     .then(function(posts) {
       res.render('profile', {
         title: `Profile for ${req.profileUser.username}`,
@@ -231,4 +247,70 @@ exports.profileFollowingScreen = async function(req, res) {
   } catch {
     res.render('404');
   }
+};
+
+exports.viewProfileEditScreen = async function(req, res) {
+  if (!req.isVisitorsProfile) {
+    req.flash('errors', 'You do not have permission to perform that action.');
+    req.session.save(() => res.redirect(`/profile/${req.params.username}`));
+    return;
+  }
+
+  try {
+    let userDoc = await User.findById(req.session.user._id);
+    let userWithAvatar = new User(userDoc, true);
+    res.render('profile-edit', {
+      title: 'Modifier le profil',
+      profileUser: {
+        username: userDoc.username,
+        email: userDoc.email,
+        avatar: userWithAvatar.avatar,
+        hasCustomAvatar: !!userDoc.avatarUrl
+      }
+    });
+  } catch {
+    res.render('404');
+  }
+};
+
+exports.updateProfile = function(req, res) {
+  if (!req.profileUser._id.equals(req.session.user._id)) {
+    req.flash('errors', 'You do not have permission to perform that action.');
+    req.session.save(() => res.redirect('/'));
+    return;
+  }
+
+  const avatarOptions = {};
+
+  if (req.body.useGravatar === 'true') {
+    avatarOptions.useGravatar = true;
+  } else if (req.file) {
+    avatarOptions.newAvatarUrl = `/uploads/avatars/${req.file.filename}`;
+  }
+
+  let user = new User(req.body);
+  user
+    .updateProfile(req.session.user._id, avatarOptions)
+    .then(function(updatedUser) {
+      req.session.user.username = updatedUser.username;
+      req.session.user.avatar = updatedUser.avatar;
+      req.flash('success', 'Profil mis à jour avec succès.');
+      req.session.save(() => res.redirect(`/profile/${updatedUser.username}`));
+    })
+    .catch(function(errors) {
+      if (req.file) {
+        User.deleteAvatarFile(`/uploads/avatars/${req.file.filename}`);
+      }
+
+      if (Array.isArray(errors)) {
+        errors.forEach(function(error) {
+          req.flash('errors', error);
+        });
+      } else {
+        req.flash('errors', 'Unable to update profile.');
+      }
+      req.session.save(() =>
+        res.redirect(`/profile/${req.params.username}/edit`)
+      );
+    });
 };

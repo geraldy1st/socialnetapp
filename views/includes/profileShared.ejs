@@ -1,46 +1,56 @@
-<h2>
-  <img class="avatar-small" src="<%= profileAvatar %>" /> <%= profileUsername %>
-  <% if (user && !isVisitorsProfile) { if (isFollowing) { %>
-  <form
-    class="ml-2 d-inline"
-    action="/removeFollow/<%= profileUsername %>"
-    method="POST"
-  >
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+<div class="profile-header">
+  <div class="profile-header__avatar">
+    <img src="<%= profileAvatar %>" alt="<%= profileUsername %>" />
+  </div>
+  <div class="profile-header__info">
+    <div class="profile-header__top">
+      <h1 class="profile-header__username"><%= profileUsername %></h1>
+      <% if (user && isVisitorsProfile) { %>
+        <a href="/profile/<%= profileUsername %>/edit" class="btn-edit-profile">
+          <i class="fas fa-cog"></i> Modifier le profil
+        </a>
+      <% } else if (user && !isVisitorsProfile) { %>
+        <% if (isFollowing) { %>
+        <form action="/removeFollow/<%= profileUsername %>" method="POST" class="d-inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="btn-unfollow">Abonné</button>
+        </form>
+        <% } else { %>
+        <form action="/addFollow/<%= profileUsername %>" method="POST" class="d-inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="btn-follow">Suivre</button>
+        </form>
+        <% } %>
+      <% } %>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stats__item">
+        <strong><%= counts.postCount %></strong> publications
+      </div>
+      <div class="profile-stats__item">
+        <strong><%= counts.followerCount %></strong> abonnés
+      </div>
+      <div class="profile-stats__item">
+        <strong><%= counts.followingCount %></strong> abonnements
+      </div>
+    </div>
+  </div>
+</div>
 
-    <button class="btn btn-danger btn-sm">
-      Stop Following <i class="fas fa-user-times"></i>
-    </button>
-  </form>
-  <% } else { %>
-  <form
-    class="ml-2 d-inline"
-    action="/addFollow/<%= profileUsername %>"
-    method="POST"
-  >
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-
-    <button class="btn btn-primary btn-sm">
-      Follow <i class="fas fa-user-plus"></i>
-    </button>
-  </form>
-  <% } } %>
-</h2>
-
-<div class="profile-nav nav nav-tabs pt-2 mb-4">
+<nav class="profile-nav nav">
   <a
     href="/profile/<%= profileUsername %>"
-    class="profile-nav-link nav-item nav-link <%= currentPage == 'posts' ? 'active' : '' %>"
-    >Posts: <%= counts.postCount %></a
+    class="nav-link <%= currentPage == 'posts' ? 'active' : '' %>"
+    >Publications</a
   >
   <a
-    href="/profile/<%= profileUsername%>/followers"
-    class="profile-nav-link nav-item nav-link <%= currentPage == 'followers' ? 'active' : '' %>"
-    >Followers: <%= counts.followerCount %></a
+    href="/profile/<%= profileUsername %>/followers"
+    class="nav-link <%= currentPage == 'followers' ? 'active' : '' %>"
+    >Abonnés</a
   >
   <a
     href="/profile/<%= profileUsername %>/following"
-    class="profile-nav-link nav-item nav-link <%= currentPage == 'following' ? 'active' : '' %>"
-    >Following: <%= counts.followingCount %></a
+    class="nav-link <%= currentPage == 'following' ? 'active' : '' %>"
+    >Abonnements</a
   >
-</div>
+</nav>

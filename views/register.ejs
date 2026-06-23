@@ -1,0 +1,74 @@
+<%- include('includes/header') %>
+
+<main class="register-page">
+  <div class="register-page__card form-card">
+    <div class="register-page__header">
+      <h1 class="register-page__title">Créer un compte</h1>
+      <p class="register-page__subtitle">
+        Rejoignez SocialNet pour publier, suivre vos amis et échanger en direct.
+      </p>
+    </div>
+
+    <% regErrors.forEach(function(message){ %>
+    <div class="flash-toast flash-toast--error mb-3"><%= message %></div>
+    <% }) %>
+
+    <ul class="register-criteria">
+      <li><strong>Identifiant</strong> — 3 à 30 caractères, lettres et chiffres uniquement</li>
+      <li><strong>E-mail</strong> — adresse valide, non déjà utilisée</li>
+      <li><strong>Mot de passe</strong> — 12 à 50 caractères</li>
+    </ul>
+
+    <form action="/register" method="POST" id="registration-form" novalidate>
+      <div class="form-group">
+        <label for="username-register">Nom d'utilisateur</label>
+        <input
+          name="username"
+          id="username-register"
+          class="form-control"
+          type="text"
+          placeholder="Choisissez un identifiant"
+          autocomplete="off"
+          maxlength="30"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email-register">E-mail</label>
+        <input
+          name="email"
+          id="email-register"
+          class="form-control"
+          type="text"
+          placeholder="vous@exemple.com"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password-register">Mot de passe</label>
+        <input
+          name="password"
+          id="password-register"
+          class="form-control"
+          type="password"
+          placeholder="12 caractères minimum"
+          autocomplete="new-password"
+          maxlength="50"
+        />
+      </div>
+
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <button type="submit" class="btn btn-instagram btn-block py-2">
+        S'inscrire
+      </button>
+    </form>
+
+    <p class="register-page__footer text-center text-muted small mt-4 mb-0">
+      Déjà un compte ?
+      <a href="/" class="register-page__link">Se connecter</a>
+    </p>
+  </div>
+</main>
+
+<%- include('includes/footer') %>

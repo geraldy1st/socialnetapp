@@ -61,30 +61,27 @@ export default class Search {
 
   renderResultsHTML(posts) {
     if (posts.length) {
-      this.resultArea.innerHTML = DOMpurify.sanitize(`<div class="list-group shadow-sm">
-      <div class="list-group-item active"><strong>Search Results</strong> (${
-        posts.length > 1 ? `${posts.length} items found` : `1 item found`
+      this.resultArea.innerHTML = DOMpurify.sanitize(`<div class="search-results-card">
+      <div class="search-results-card__header">Résultats (${
+        posts.length > 1 ? `${posts.length} trouvés` : `1 trouvé`
       })</div>
       ${posts
         .map(post => {
           let postDate = new Date(post.createdDate);
           return `<a href="/post/${
             post._id
-          }" class="list-group-item list-group-item-action">
-          <img class="avatar-tiny" src="${post.author.avatar}"> <strong>${
-            post.title
-          }</strong>
-          <span class="text-muted small">by ${
-            post.author.username
-          } on ${postDate.getMonth() +
-            1}/${postDate.getDate()}/${postDate.getFullYear()}</span>
+          }" class="search-results-card__item">
+          <img class="avatar-tiny" src="${post.author.avatar}" alt="">
+          <div>
+            <strong>${post.title}</strong>
+            <span class="meta">${post.author.username} · ${postDate.toLocaleDateString('fr-FR')}</span>
+          </div>
         </a>`;
         })
         .join('')}
-      
     </div>`);
     } else {
-      this.resultArea.innerHTML = `<p class="alert alert-danger text-center shadow-sm" >Sorry, we could not find any result for this search.</p>`;
+      this.resultArea.innerHTML = `<p class="search-empty">Aucun résultat pour cette recherche.</p>`;
     }
     this.hideLoaderIcon();
     this.showResultsArea();
@@ -122,8 +119,8 @@ export default class Search {
       <div class="search-overlay-top shadow-sm">
         <div class="container container--narrow">
           <label for="live-search-field" class="search-overlay-icon"><i class="fas fa-search"></i></label>
-          <input type="text" id="live-search-field" class="live-search-field" placeholder="What are you interested in?">
-          <span class="close-live-search"><i class="fas fa-times-circle"></i></span>
+          <input type="text" id="live-search-field" class="live-search-field" placeholder="Rechercher des publications…">
+          <span class="close-live-search"><i class="fas fa-times"></i></span>
         </div>
       </div>
   

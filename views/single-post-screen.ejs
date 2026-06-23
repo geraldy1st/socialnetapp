@@ -1,54 +1,53 @@
 <%- include('includes/header') %>
 
-<div class="container py-md-5 container--narrow">
-  <%- include('includes/flash') %>
+<main class="page-main">
+  <div class="container--narrow">
+    <%- include('includes/flash') %>
 
-  <div class="d-flex justify-content-between">
-    <h2><%= post.title %></h2>
-    <% if (post.isVisitorOwner) { %>
-    <span class="pt-2">
-      <a
-        href="/post/<%= post._id %>/edit"
-        class="text-primary mr-2"
-        data-toggle="tooltip"
-        data-placement="top"
-        title="Edit"
-        ><i class="fas fa-edit"></i
-      ></a>
-      <form
-        class="delete-post-form d-inline"
-        action="/post/<%= post._id %>/delete"
-        method="POST"
-      >
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-        <button
-          class="delete-post-button text-danger"
-          data-toggle="tooltip"
-          data-placement="top"
-          title="Delete"
+    <article class="post-detail">
+      <div class="post-detail__header">
+        <h1 class="post-detail__title"><%= post.title %></h1>
+        <% if (post.isVisitorOwner) { %>
+        <div class="post-detail__actions">
+          <a href="/post/<%= post._id %>/edit" title="Modifier"
+            ><i class="fas fa-edit"></i
+          ></a>
+          <form
+            class="d-inline"
+            action="/post/<%= post._id %>/delete"
+            method="POST"
+          >
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <button type="submit" class="delete-post-button" title="Supprimer">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="post-detail__meta">
+        <a href="/profile/<%= post.author.username %>">
+          <img class="avatar-tiny" src="<%= post.author.avatar %>" alt="" />
+        </a>
+        <a href="/profile/<%= post.author.username %>" class="username"
+          ><%= post.author.username %></a
         >
-          <i class="fas fa-trash"></i>
-        </button>
-      </form>
-    </span>
-    <% } %>
-  </div>
+        <span class="date"
+          >· <%= post.createdDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %></span
+        >
+        <% if (post.visibility === 'private' && post.isVisitorOwner) { %>
+        <span class="post-visibility-badge"
+          ><i class="fas fa-lock"></i> Privé</span
+        >
+        <% } %>
+      </div>
 
-  <p class="text-muted small mb-4">
-    <a href="/profile/<%= post.author.username %>"
-      ><img class="avatar-tiny" src="<%= post.author.avatar %>"
-    /></a>
-    Posted by
-    <a href="/profile/<%= post.author.username %>"
-      ><%= post.author.username %></a
-    >
-    on <%= post.createdDate.getMonth() + 1 %>/<%= post.createdDate.getDate()
-    %>/<%= post.createdDate.getFullYear() %>
-  </p>
-
-  <div class="body-content">
-    <%- filterUserHTML(post.body) %>
+      <div class="post-detail__body body-content">
+        <%- filterUserHTML(post.body) %>
+      </div>
+    </article>
   </div>
-</div>
+</main>
 
 <%- include('includes/footer') %>

@@ -1,39 +1,61 @@
 <%- include('includes/header') %>
 
-<div class="container py-md-5 container--narrow">
-  <%- include('includes/flash') %>
-  <form action="/create-post" method="POST">
-    <div class="form-group">
-      <label for="post-title" class="text-muted mb-1"
-        ><small>Title</small></label
-      >
-      <input
-        required
-        name="title"
-        id="post-title"
-        class="form-control form-control-lg form-control-title"
-        type="text"
-        placeholder=""
-        autocomplete="off"
-      />
+<main class="page-main">
+  <div class="container--narrow">
+    <%- include('includes/flash') %>
+
+    <div class="form-card">
+      <h2 class="h5 font-weight-bold mb-4">Nouvelle publication</h2>
+      <form action="/create-post" method="POST">
+        <div class="form-group">
+          <label for="post-title">Titre</label>
+          <input
+            required
+            name="title"
+            id="post-title"
+            class="form-control form-control-title"
+            type="text"
+            placeholder="Donnez un titre à votre post"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="post-body">Contenu</label>
+          <textarea
+            required
+            name="body"
+            id="post-body"
+            class="body-content tall-textarea form-control"
+            placeholder="Écrivez votre publication…"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Visibilité</label>
+          <div class="visibility-options">
+            <label class="visibility-option">
+              <input type="radio" name="visibility" value="public" checked />
+              <span class="visibility-option__content">
+                <strong>Public</strong>
+                <small>Visible par tous, y compris les personnes qui ne vous suivent pas</small>
+              </span>
+            </label>
+            <label class="visibility-option">
+              <input type="radio" name="visibility" value="private" />
+              <span class="visibility-option__content">
+                <strong>Privé</strong>
+                <small>Visible uniquement par vos abonnés</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button type="submit" class="btn btn-instagram">Publier</button>
+      </form>
     </div>
+  </div>
+</main>
 
-    <div class="form-group">
-      <label for="post-body" class="text-muted mb-1"
-        ><small>Body Content</small></label
-      >
-      <textarea
-        required
-        name="body"
-        id="post-body"
-        class="body-content tall-textarea form-control"
-        type="text"
-      ></textarea>
-    </div>
-
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-
-    <button class="btn btn-primary">Save New Post</button>
-  </form>
-</div>
 <%- include('includes/footer') %>

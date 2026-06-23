@@ -5,7 +5,7 @@ export default class RegistrationForm {
     this._csrf = document.querySelector('[name="_csrf"]').value;
     this.form = document.querySelector('#registration-form');
     this.allFields = document.querySelectorAll(
-      '#registration-form .form-control '
+      '#registration-form .form-control'
     );
     this.insertValidationElements();
     this.username = document.querySelector('#username-register');
@@ -18,8 +18,6 @@ export default class RegistrationForm {
     this.email.isUnique = false;
     this.events();
   }
-
-  // Events
 
   events() {
     this.form.addEventListener('submit', e => {
@@ -48,24 +46,31 @@ export default class RegistrationForm {
     });
   }
 
-  // Methods
   formSubmitHandler() {
+    this.username.errors = false;
+    this.email.errors = false;
+    this.password.errors = false;
+
     this.usernameImmediately();
-    this.usernameAfterDelay();
-    this.emailAfterDelay();
     this.passwordImmediately();
+    this.usernameAfterDelay(true);
+    this.emailAfterDelay(true);
     this.passwordAfterDelay();
 
     if (
+      this.username.value.length >= 3 &&
       this.username.isUnique &&
       !this.username.errors &&
       this.email.isUnique &&
       !this.email.errors &&
-      !this.passwordAfterDelay.errors
+      this.password.value.length >= 12 &&
+      this.password.value.length <= 50 &&
+      !this.password.errors
     ) {
       this.form.submit();
     }
   }
+
   isDifferent(el, handler) {
     if (el.previousValue != el.value) {
       handler.call(this);
@@ -91,19 +96,23 @@ export default class RegistrationForm {
     if (this.password.value.length > 50) {
       this.showValidationError(
         this.password,
-        'Passowrd cannot exceed 50 characters.'
+        'Le mot de passe ne peut pas dépasser 50 caractères.'
       );
     }
     if (!this.password.errors) {
       this.hideValidationError(this.password);
     }
   }
+
   passwordAfterDelay() {
     if (this.password.value.length < 12) {
       this.showValidationError(
         this.password,
-        'Password must be at least 12 characters.'
+        'Le mot de passe doit contenir au moins 12 caractères.'
       );
+    } else if (this.password.value.length <= 50) {
+      this.hideValidationError(this.password);
+      this.password.errors = false;
     }
   }
 
@@ -113,14 +122,16 @@ export default class RegistrationForm {
     this.email.timer = setTimeout(() => this.emailAfterDelay(), 800);
   }
 
-  emailAfterDelay() {
+  emailAfterDelay(forceCheck) {
     if (!/^\S+@\S+$/.test(this.email.value)) {
       this.showValidationError(
         this.email,
-        'You provide a valid email address.'
+        'Vous devez fournir une adresse e-mail valide.'
       );
+      return;
     }
-    if (!this.email.errors) {
+
+    if (!this.email.errors || forceCheck) {
       axios
         .post('/doesEmailExist', { _csrf: this._csrf, email: this.email.value })
         .then(response => {
@@ -128,15 +139,16 @@ export default class RegistrationForm {
             this.email.isUnique = false;
             this.showValidationError(
               this.email,
-              'That email is already been used.'
+              'Cet e-mail est déjà utilisé.'
             );
           } else {
             this.email.isUnique = true;
             this.hideValidationError(this.email);
+            this.email.errors = false;
           }
         })
         .catch(() => {
-          console.log('Please try again later.');
+          console.log('Veuillez réessayer plus tard.');
         });
     }
   }
@@ -148,13 +160,13 @@ export default class RegistrationForm {
     ) {
       this.showValidationError(
         this.username,
-        'Username can only conatin letters and numbers.'
+        "L'identifiant ne peut contenir que des lettres et des chiffres."
       );
     }
     if (this.username.value.length > 30) {
       this.showValidationError(
         this.username,
-        'Username cannot exceed 30 characters.'
+        "L'identifiant ne peut pas dépasser 30 caractères."
       );
     }
     if (!this.username.errors) {
@@ -163,23 +175,31 @@ export default class RegistrationForm {
   }
 
   hideValidationError(el) {
-    el.nextElementSibling.classList.remove('liveValidateMessage--visible');
+    const message = el.parentElement.querySelector('.liveValidateMessage');
+    if (message) {
+      message.classList.remove('liveValidateMessage--visible');
+    }
   }
 
   showValidationError(el, message) {
-    el.nextElementSibling.innerHTML = message;
-    el.nextElementSibling.classList.add('liveValidateMessage--visible');
+    const messageEl = el.parentElement.querySelector('.liveValidateMessage');
+    if (messageEl) {
+      messageEl.innerHTML = message;
+      messageEl.classList.add('liveValidateMessage--visible');
+    }
     el.errors = true;
   }
 
-  usernameAfterDelay() {
+  usernameAfterDelay(forceCheck) {
     if (this.username.value.length < 3) {
       this.showValidationError(
         this.username,
-        'Username must be at least 3 characters.'
+        "L'identifiant doit contenir au moins 3 caractères."
       );
+      return;
     }
-    if (!this.username.errors) {
+
+    if (!this.username.errors || forceCheck) {
       axios
         .post('/doesUsernameExist', {
           _csrf: this._csrf,
@@ -189,25 +209,29 @@ export default class RegistrationForm {
           if (response.data) {
             this.showValidationError(
               this.username,
-              'That username is already taken.'
+              'Cet identifiant est déjà pris.'
             );
             this.username.isUnique = false;
           } else {
             this.username.isUnique = true;
+            this.hideValidationError(this.username);
+            this.username.errors = false;
           }
         })
         .catch(() => {
-          console.log('try again later');
+          console.log('Veuillez réessayer plus tard.');
         });
     }
   }
 
   insertValidationElements() {
     this.allFields.forEach(function(el) {
-      el.insertAdjacentHTML(
-        'afterend',
-        '<div class="alert alert-danger small liveValidateMessage"></div>'
-      );
+      if (!el.parentElement.querySelector('.liveValidateMessage')) {
+        el.insertAdjacentHTML(
+          'afterend',
+          '<div class="alert alert-danger small liveValidateMessage"></div>'
+        );
+      }
     });
   }
 }

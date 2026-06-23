@@ -6,13 +6,20 @@ const followsCollection = require('../db')
   .collection('follows');
 const ObjectID = require('mongodb').ObjectID;
 const User = require('./User');
+const Follow = require('./Follow');
 const sanitizeHTML = require('sanitize-html');
+
+const PUBLIC_VISIBILITY = { $or: [{ visibility: 'public' }, { visibility: { $exists: false } }] };
 
 let Post = function(data, userid, requestedPostId) {
   this.data = data;
   this.errors = [];
   this.userid = userid;
   this.requestedPostId = requestedPostId;
+};
+
+Post.prototype.parseVisibility = function() {
+  return this.data.visibility === 'private' ? 'private' : 'public';
 };
 
 Post.prototype.cleanUp = function() {
@@ -33,8 +40,30 @@ Post.prototype.cleanUp = function() {
       allowedTags: [],
       allowedAttributes: {}
     }),
+    visibility: this.parseVisibility(),
     createdDate: new Date(),
     author: ObjectID(this.userid)
+  };
+};
+
+Post.prototype.cleanUpForUpdate = function() {
+  if (typeof this.data.title != 'string') {
+    this.data.title = '';
+  }
+  if (typeof this.data.body != 'string') {
+    this.data.body = '';
+  }
+
+  this.data = {
+    title: sanitizeHTML(this.data.title.trim(), {
+      allowedTags: [],
+      allowedAttributes: {}
+    }),
+    body: sanitizeHTML(this.data.body.trim(), {
+      allowedTags: [],
+      allowedAttributes: {}
+    }),
+    visibility: this.parseVisibility()
   };
 };
 
@@ -87,12 +116,18 @@ Post.prototype.update = function() {
 
 Post.prototype.actuallyUpdate = function() {
   return new Promise(async (resolve, reject) => {
-    this.cleanUp();
+    this.cleanUpForUpdate();
     this.validate();
     if (!this.errors.length) {
       await postsCollection.findOneAndUpdate(
         { _id: new ObjectID(this.requestedPostId) },
-        { $set: { title: this.data.title, body: this.data.body } }
+        {
+          $set: {
+            title: this.data.title,
+            body: this.data.body,
+            visibility: this.data.visibility
+          }
+        }
       );
       resolve('success');
     } else {
@@ -101,44 +136,112 @@ Post.prototype.actuallyUpdate = function() {
   });
 };
 
+Post.canVisitorViewPrivatePosts = async function(authorId, visitorId) {
+  if (!visitorId || visitorId === 0) {
+    return false;
+  }
+
+  if (authorId.equals(visitorId)) {
+    return true;
+  }
+
+  return Follow.isVisitorFollowing(authorId, visitorId);
+};
+
+Post.getAuthorVisibilityMatch = async function(authorId, visitorId) {
+  const match = { author: authorId };
+  const canViewPrivate = await Post.canVisitorViewPrivatePosts(
+    authorId,
+    visitorId
+  );
+
+  if (!canViewPrivate) {
+    match.$or = PUBLIC_VISIBILITY.$or;
+  }
+
+  return match;
+};
+
+Post.getGlobalVisibilityMatch = async function(visitorId) {
+  if (!visitorId || visitorId === 0) {
+    return PUBLIC_VISIBILITY;
+  }
+
+  let followedUsers = await followsCollection
+    .find({ authorId: new ObjectID(visitorId) })
+    .toArray();
+  followedUsers = followedUsers.map(function(followDoc) {
+    return followDoc.followedId;
+  });
+
+  return {
+    $or: [
+      ...PUBLIC_VISIBILITY.$or,
+      { author: new ObjectID(visitorId) },
+      { author: { $in: followedUsers }, visibility: 'private' }
+    ]
+  };
+};
+
+Post.assertVisitorCanView = async function(post, visitorId) {
+  const visibility = post.visibility || 'public';
+
+  if (visibility !== 'private') {
+    return true;
+  }
+
+  return Post.canVisitorViewPrivatePosts(post.authorId, visitorId);
+};
+
 Post.reusablePostQuery = function(uniqueOperations, visitorId) {
   return new Promise(async function(resolve, reject) {
-    let aggOperations = uniqueOperations.concat([
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'author',
-          foreignField: '_id',
-          as: 'authorDocument'
+    try {
+      let aggOperations = uniqueOperations.concat([
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'author',
+            foreignField: '_id',
+            as: 'authorDocument'
+          }
+        },
+        {
+          $project: {
+            title: 1,
+            body: 1,
+            visibility: 1,
+            createdDate: 1,
+            authorId: '$author',
+            author: { $arrayElemAt: ['$authorDocument', 0] }
+          }
         }
-      },
-      {
-        $project: {
-          title: 1,
-          body: 1,
-          createdDate: 1,
-          authorId: '$author',
-          author: { $arrayElemAt: ['$authorDocument', 0] }
+      ]);
+
+      let posts = await postsCollection.aggregate(aggOperations).toArray();
+
+      posts = posts.map(function(post) {
+        if (visitorId && visitorId !== 0) {
+          post.isVisitorOwner = post.authorId.equals(visitorId);
+        } else {
+          post.isVisitorOwner = false;
         }
-      }
-    ]);
 
-    let posts = await postsCollection.aggregate(aggOperations).toArray();
+        post.author = {
+          username: post.author.username,
+          avatar: new User(post.author, true).avatar
+        };
 
-    // clean up author property in each post object
-    posts = posts.map(function(post) {
-      post.isVisitorOwner = post.authorId.equals(visitorId);
-      post.authorId = undefined;
+        if (!post.visibility) {
+          post.visibility = 'public';
+        }
 
-      post.author = {
-        username: post.author.username,
-        avatar: new User(post.author, true).avatar
-      };
+        return post;
+      });
 
-      return post;
-    });
-
-    resolve(posts);
+      resolve(posts);
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
@@ -154,20 +257,35 @@ Post.findSingleById = function(id, visitorId) {
       visitorId
     );
 
-    if (posts.length) {
-      console.log(posts[0]);
-      resolve(posts[0]);
+    if (!posts.length) {
+      reject();
+      return;
+    }
+
+    const post = posts[0];
+    const canView = await Post.assertVisitorCanView(post, visitorId);
+
+    if (canView) {
+      resolve(post);
     } else {
       reject();
     }
   });
 };
 
-Post.findByAuthorId = function(authorId) {
-  return Post.reusablePostQuery([
-    { $match: { author: authorId } },
-    { $sort: { createdDate: -1 } }
-  ]);
+Post.findByAuthorId = function(authorId, visitorId) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      const match = await Post.getAuthorVisibilityMatch(authorId, visitorId);
+      const posts = await Post.reusablePostQuery(
+        [{ $match: match }, { $sort: { createdDate: -1 } }],
+        visitorId
+      );
+      resolve(posts);
+    } catch {
+      reject();
+    }
+  });
 };
 
 Post.delete = function(postIdToDelete, currentUserId) {
@@ -186,24 +304,75 @@ Post.delete = function(postIdToDelete, currentUserId) {
   });
 };
 
-Post.search = function(searchTerm) {
+Post.search = function(searchTerm, visitorId) {
   return new Promise(async (resolve, reject) => {
-    if (typeof searchTerm == 'string') {
-      let posts = await Post.reusablePostQuery([
-        { $match: { $text: { $search: searchTerm } } },
-        { $sort: { score: { $meta: 'textScore' } } }
-      ]);
-      resolve(posts);
-    } else {
+    if (typeof searchTerm != 'string') {
       reject();
+      return;
+    }
+
+    const trimmed = searchTerm.trim();
+    if (!trimmed) {
+      resolve([]);
+      return;
+    }
+
+    const safeVisitorId = visitorId === undefined ? 0 : visitorId;
+    const visibilityMatch = await Post.getGlobalVisibilityMatch(safeVisitorId);
+
+    try {
+      let posts = await Post.reusablePostQuery(
+        [
+          {
+            $match: {
+              $and: [{ $text: { $search: trimmed } }, visibilityMatch]
+            }
+          },
+          { $addFields: { score: { $meta: 'textScore' } } },
+          { $sort: { score: -1 } }
+        ],
+        safeVisitorId
+      );
+      resolve(posts);
+    } catch {
+      try {
+        const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        let posts = await Post.reusablePostQuery(
+          [
+            {
+              $match: {
+                $and: [
+                  {
+                    $or: [
+                      { title: { $regex: escaped, $options: 'i' } },
+                      { body: { $regex: escaped, $options: 'i' } }
+                    ]
+                  },
+                  visibilityMatch
+                ]
+              }
+            },
+            { $sort: { createdDate: -1 } }
+          ],
+          safeVisitorId
+        );
+        resolve(posts);
+      } catch {
+        resolve([]);
+      }
     }
   });
 };
 
-Post.countPostsByAuthor = function(id) {
+Post.countPostsByAuthor = function(id, visitorId) {
   return new Promise(async (resolve, reject) => {
-    let postCount = await postsCollection.countDocuments({ author: id });
-    resolve(postCount);
+    try {
+      const match = await Post.getAuthorVisibilityMatch(id, visitorId);
+      let postCount = await postsCollection.countDocuments(match);
+      resolve(postCount);
+    } catch {
+      reject();
+    }
   });
 };
 
@@ -220,6 +389,16 @@ Post.getFeed = async function(id) {
     { $match: { author: { $in: followedUsers } } },
     { $sort: { createdDate: -1 } }
   ]);
+};
+
+Post.getHomeFeed = async function(visitorId) {
+  const safeVisitorId = visitorId === undefined ? 0 : visitorId;
+  const visibilityMatch = await Post.getGlobalVisibilityMatch(safeVisitorId);
+
+  return Post.reusablePostQuery(
+    [{ $match: visibilityMatch }, { $sort: { createdDate: -1 } }],
+    safeVisitorId
+  );
 };
 
 module.exports = Post;

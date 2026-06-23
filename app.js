@@ -70,6 +70,9 @@ app.use(express.static('public'));
 app.set('views', 'views');
 app.set('view engine', 'ejs');
 
+// Parse multipart profile edits before CSRF so _csrf is available in req.body
+app.use(require('./middleware/prepareProfileEditUpload'));
+
 app.use(csrf());
 
 app.use(function(req, res, next) {
@@ -82,8 +85,12 @@ app.use('/', router);
 app.use(function(err, req, res, next) {
   if (err) {
     if (err.code == 'EBADCSRFTOKEN') {
-      req.flash('errors', 'Cross site request forgery detected.');
-      req.session.save(() => res.redirect('/'));
+      req.flash(
+        'errors',
+        'Session expirée ou formulaire invalide. Veuillez réessayer.'
+      );
+      const redirectTo = req.get('Referer') || '/';
+      req.session.save(() => res.redirect(redirectTo));
     } else {
       res.render('404');
     }

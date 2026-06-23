@@ -1,22 +1,25 @@
 const Post = require('../models/Post');
 const sendgrid = require('@sendgrid/mail');
-sendgrid.setApiKey(process.env.SENDGRIDAPIKEY);
+if (process.env.SENDGRIDAPIKEY) {
+  sendgrid.setApiKey(process.env.SENDGRIDAPIKEY);
+}
 
-exports.viewCreateScreen = function(req, res) {
-  res.render('create-post');
-};
+function sendNewPostNotification() {
+  if (!process.env.SENDGRIDAPIKEY) {
+    return Promise.resolve();
+  }
 
-exports.create = function(req, res) {
-  let post = new Post(req.body, req.session.user._id);
-  post
-    .create()
-    .then(function(newId) {
-      sendgrid.send({
-        to: `geraldy1st@gmail.com`,
-        from: 'donotreply@socialnetapp.com',
-        subject: 'New post on SNA',
-        text: 'There is news on our app go check it out!',
-        html: `<!doctype html>
+  return sendgrid.send({
+    to: 'geraldy1st@gmail.com',
+    from: 'donotreply@socialnetapp.com',
+    subject: 'New post on SNA',
+    text: 'There is news on our app go check it out!',
+    html: newPostEmailHtml()
+  });
+}
+
+function newPostEmailHtml() {
+  return `<!doctype html>
         <html>
         
         <head>
@@ -106,8 +109,21 @@ exports.create = function(req, res) {
         </div>
         </body>
         
-        </html>`
-      });
+        </html>`;
+}
+
+exports.viewCreateScreen = function(req, res) {
+  res.render('create-post');
+};
+
+exports.create = function(req, res) {
+  let post = new Post(req.body, req.session.user._id);
+  post
+    .create()
+    .then(function(newId) {
+      return sendNewPostNotification().then(() => newId).catch(() => newId);
+    })
+    .then(function(newId) {
       req.flash('success', 'New post successfully created.');
       req.session.save(() => res.redirect(`/post/${newId}`));
     })
@@ -209,7 +225,7 @@ exports.apiDelete = function(req, res) {
 };
 
 exports.search = function(req, res) {
-  Post.search(req.body.searchTerm)
+  Post.search(req.body.searchTerm, req.visitorId)
     .then(posts => {
       res.json(posts);
     })

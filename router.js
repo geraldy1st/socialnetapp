@@ -6,6 +6,7 @@ const followController = require('./controllers/followController');
 
 // user related routes
 router.get('/', userController.home);
+router.get('/register', userController.viewRegisterScreen);
 router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.post('/logout', userController.logout);
@@ -30,6 +31,19 @@ router.get(
   userController.ifUserExists,
   userController.sharedProfileData,
   userController.profileFollowingScreen
+);
+router.get(
+  '/profile/:username/edit',
+  userController.mustBeLoggedIn,
+  userController.ifUserExists,
+  userController.sharedProfileData,
+  userController.viewProfileEditScreen
+);
+router.post(
+  '/profile/:username/edit',
+  userController.mustBeLoggedIn,
+  userController.ifUserExists,
+  userController.updateProfile
 );
 
 // post related routes

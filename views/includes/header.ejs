@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>
-      <%= typeof(title) == "undefined" ? 'Social Network' : `${title} | Social
-      Network` %>
+      <%= typeof(title) == "undefined" ? 'SocialNet' : `${title} | SocialNet` %>
     </title>
     <link
       rel="stylesheet"
@@ -20,83 +19,58 @@
       integrity="sha384-GqVMZRt5Gn7tB9D9q7ONtcp4gtHIUEW/yG7h98J7IpE3kpi+srfFyyB/04OV6pG0"
       crossorigin="anonymous"
     ></script>
-    <link
-      href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="/main.css" />
   </head>
   <body>
-    <header class="header-bar mb-3">
-      <div
-        class="container d-flex flex-column flex-md-row align-items-center p-3"
-      >
-        <h4 class="my-0 mr-md-auto font-weight-normal">
-          <a href="/" class="text-white">Social Network</a>
-        </h4>
+    <header class="app-header<%= user ? '' : ' app-header--guest' %>">
+      <div class="app-header__inner container--app">
+        <a href="/" class="app-logo">SocialNet</a>
 
         <% if(user){ %>
-        <div class="flex-row my-3 my-md-0">
-          <a
-            href="#"
-            class="text-white mr-2 header-search-icon"
-            title="Search"
-            data-toggle="tooltip"
-            data-placement="bottom"
+        <div class="app-header__actions">
+          <a href="#" class="header-search-icon app-icon-btn"
             ><i class="fas fa-search"></i
           ></a>
-          <span
-            class="text-white mr-2 header-chat-icon"
-            title="Chat"
-            data-toggle="tooltip"
-            data-placement="bottom"
-            ><i class="fas fa-comment"></i
+          <span class="header-chat-icon app-icon-btn"
+            ><i class="far fa-paper-plane"></i
           ></span>
-          <a href="/profile/<%= user.username %>" class="mr-2"
-            ><img
-              title="My Profile"
-              data-toggle="tooltip"
-              data-placement="bottom"
-              style="width: 32px; height: 32px; border-radius: 16px;"
-              src="<%= user.avatar %>"
+          <a href="/create-post" class="app-icon-btn" title="Nouveau post"
+            ><i class="far fa-plus-square"></i
+          ></a>
+          <a href="/profile/<%= user.username %>" class="app-avatar-link" title="Mon profil"
+            ><img src="<%= user.avatar %>" alt="<%= user.username %>"
           /></a>
-          <a class="btn btn-sm btn-success mr-2" href="/create-post"
-            >Create Post</a
-          >
-          <form action="/logout" method="POST" class="d-inline">
+          <form action="/logout" method="POST" class="app-logout-form">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-            <button class="btn btn-sm btn-secondary">Sign Out</button>
+            <button type="submit" class="app-logout-btn">Déconnexion</button>
           </form>
         </div>
-
-        <% }else{ %>
-        <form action="/login" method="POST" class="mb-0 pt-2 pt-md-0">
-          <div class="row align-items-center">
-            <div class="col-md mr-0 pr-md-0 mb-3 mb-md-0">
+        <% } else { %>
+        <div class="app-header__guest-actions">
+          <form action="/login" method="POST" class="header-login mb-0" aria-label="Connexion">
+            <div class="header-login__fields">
               <input
                 name="username"
-                class="form-control form-control-sm input-dark"
+                class="form-control form-control-sm header-login__input"
                 type="text"
-                placeholder="Username"
-                autocomplete="off"
+                placeholder="Identifiant"
+                autocomplete="username"
               />
-            </div>
-            <div class="col-md mr-0 pr-md-0 mb-3 mb-md-0">
               <input
                 name="password"
-                class="form-control form-control-sm input-dark"
+                class="form-control form-control-sm header-login__input"
                 type="password"
-                placeholder="Password"
+                placeholder="Mot de passe"
+                autocomplete="current-password"
               />
             </div>
-            <div class="col-md-auto">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-              <button class="btn btn-primary btn-sm">Sign In</button>
-            </div>
-          </div>
-        </form>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <button type="submit" class="btn-instagram btn-sm header-login__submit">
+              Connexion
+            </button>
+          </form>
+          <a href="/register" class="btn-instagram-outline header-register-btn">Inscription</a>
+        </div>
         <% } %>
       </div>
     </header>
-  </body>
-</html>

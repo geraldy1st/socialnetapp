@@ -1,5 +1,6 @@
 <% errors.forEach(function(message){ %>
-<div class="alert alert-danger text-center"><%= message %></div>
-<% }) %> <% success.forEach(function(message){ %>
-<div class="alert alert-success text-center"><%= message %></div>
+<div class="flash-toast flash-toast--error"><%= message %></div>
+<% }) %>
+<% success.forEach(function(message){ %>
+<div class="flash-toast flash-toast--success"><%= message %></div>
 <% }) %>

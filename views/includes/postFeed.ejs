@@ -1,0 +1,27 @@
+<% if (posts.length) { %>
+  <% posts.forEach(function(post, index) { %>
+  <article class="post-card">
+    <div class="post-card__header">
+      <a href="/profile/<%= post.author.username %>" class="post-card__author">
+        <img class="avatar-tiny" src="<%= post.author.avatar %>" alt="" />
+        <span><%= post.author.username %></span>
+      </a>
+    </div>
+    <a
+      href="/post/<%= post._id %>"
+      class="post-card__media <%= index % 3 === 1 ? 'post-card__media--alt' : index % 3 === 2 ? 'post-card__media--cool' : '' %>"
+    >
+      <h3 class="post-card__title"><%= post.title %></h3>
+      <p class="post-card__excerpt"><%= post.body.substring(0, 160) %><%= post.body.length > 160 ? '…' : '' %></p>
+    </a>
+    <div class="post-card__footer">
+      <%= post.createdDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+    </div>
+  </article>
+  <% }) %>
+<% } else { %>
+  <div class="feed-empty">
+    <h2><%= emptyTitle %></h2>
+    <p><%= emptyMessage %></p>
+  </div>
+<% } %>
