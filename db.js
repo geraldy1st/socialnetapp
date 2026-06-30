@@ -21,6 +21,14 @@ mongodb.connect(
         .db()
         .collection('comments')
         .createIndex({ postId: 1, createdDate: 1 });
+      await client
+        .db()
+        .collection('conversations')
+        .createIndex({ participants: 1 });
+      await client
+        .db()
+        .collection('messages')
+        .createIndex({ conversationId: 1, createdDate: 1 });
     } catch (indexErr) {
       if (indexErr.code !== 85 && indexErr.code !== 86) {
         console.warn('Text index setup:', indexErr.message);

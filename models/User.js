@@ -214,6 +214,45 @@ User.doesEmailExist = function(email) {
   });
 };
 
+User.searchForMessaging = function(searchTerm, excludeUserId) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      if (typeof searchTerm != 'string') {
+        resolve([]);
+        return;
+      }
+
+      const trimmed = searchTerm.trim().toLowerCase();
+      if (trimmed.length < 2) {
+        resolve([]);
+        return;
+      }
+
+      const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const users = await usersCollection
+        .find({
+          username: { $regex: escaped, $options: 'i' },
+          _id: { $ne: new ObjectID(excludeUserId) }
+        })
+        .limit(8)
+        .toArray();
+
+      resolve(
+        users.map(function(userDoc) {
+          const user = new User(userDoc, true);
+          return {
+            _id: user.data._id,
+            username: user.data.username,
+            avatar: user.avatar
+          };
+        })
+      );
+    } catch {
+      resolve([]);
+    }
+  });
+};
+
 User.findById = function(id) {
   return new Promise(async function(resolve, reject) {
     try {

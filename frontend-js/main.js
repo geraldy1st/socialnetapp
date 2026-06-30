@@ -1,15 +1,15 @@
 import Search from './modules/search';
-import Chat from './modules/chat';
 import RegistrationForm from './modules/registrationForm';
 import Likes from './modules/likes';
 import Comments from './modules/comments';
+import Messages from './modules/messages';
 
 if (document.querySelector('#registration-form')) {
   new RegistrationForm();
 }
 
-if (document.querySelector('#chat-wrapper')) {
-  new Chat();
+if (document.querySelector('.messages-page')) {
+  new Messages();
 }
 if (document.querySelector('.header-search-icon')) {
   new Search();

@@ -1,0 +1,127 @@
+<%- include('includes/header') %>
+
+<main class="page-main messages-page">
+  <div class="messages-layout<%= activeConversationId ? ' messages-layout--thread-open' : '' %>">
+    <aside class="messages-sidebar">
+      <div class="messages-sidebar__header">
+        <h1 class="messages-sidebar__title">Messages</h1>
+      </div>
+
+      <div class="messages-search">
+        <label class="messages-search__label" for="dm-user-search">
+          <i class="fas fa-search"></i>
+        </label>
+        <input
+          type="text"
+          id="dm-user-search"
+          class="messages-search__input"
+          placeholder="Rechercher un utilisateur…"
+          autocomplete="off"
+        />
+        <div class="messages-search__results" id="dm-search-results"></div>
+      </div>
+
+      <ul class="messages-list" id="messages-list">
+        <% if (conversations.length) { %>
+          <% conversations.forEach(function(conversation) { %>
+          <li>
+            <a
+              href="/messages/c/<%= conversation._id %>"
+              class="messages-list__item <%= activeConversationId && activeConversationId.toString() === conversation._id.toString() ? 'messages-list__item--active' : '' %>"
+              data-conversation-id="<%= conversation._id %>"
+            >
+              <img
+                class="messages-list__avatar"
+                src="<%= conversation.otherUser.avatar %>"
+                alt="<%= conversation.otherUser.username %>"
+              />
+              <div class="messages-list__content">
+                <div class="messages-list__top">
+                  <strong class="messages-list__username"><%= conversation.otherUser.username %></strong>
+                  <% if (conversation.lastMessage) { %>
+                  <time class="messages-list__time">
+                    <%= conversation.lastMessage.createdDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) %>
+                  </time>
+                  <% } %>
+                </div>
+                <% if (conversation.lastMessage) { %>
+                <p class="messages-list__preview">
+                  <% if (conversation.lastMessage.senderId.toString() === user._id.toString()) { %>Vous : <% } %><%= conversation.lastMessage.text %>
+                </p>
+                <% } else { %>
+                <p class="messages-list__preview messages-list__preview--empty">Nouvelle conversation</p>
+                <% } %>
+              </div>
+            </a>
+          </li>
+          <% }) %>
+        <% } else { %>
+          <li class="messages-list__empty" id="messages-list-empty">
+            Aucune conversation. Recherchez un utilisateur pour commencer.
+          </li>
+        <% } %>
+      </ul>
+    </aside>
+
+    <section class="messages-thread">
+      <% if (activeConversation && otherUser) { %>
+      <div class="messages-thread__header">
+        <a href="/messages" class="messages-thread__back" aria-label="Retour">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <a href="/profile/<%= otherUser.username %>" class="messages-thread__user">
+          <img src="<%= otherUser.avatar %>" alt="<%= otherUser.username %>" />
+          <strong><%= otherUser.username %></strong>
+        </a>
+      </div>
+
+      <div
+        class="messages-thread__log"
+        id="dm-log"
+        data-conversation-id="<%= activeConversationId %>"
+        data-current-user-id="<%= user._id %>"
+      >
+        <% messages.forEach(function(message) { %>
+        <div
+          class="dm-message <%= message.senderId.toString() === user._id.toString() ? 'dm-message--self' : 'dm-message--other' %>"
+          data-message-id="<%= message._id %>"
+        >
+          <% if (message.senderId.toString() !== user._id.toString()) { %>
+          <img class="dm-message__avatar" src="<%= message.sender.avatar %>" alt="" />
+          <% } %>
+          <div class="dm-message__bubble">
+            <p class="dm-message__text"><%= message.body %></p>
+            <time class="dm-message__time">
+              <%= message.createdDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) %>
+            </time>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+
+      <form class="messages-thread__form" id="dm-form" data-conversation-id="<%= activeConversationId %>">
+        <input
+          type="text"
+          id="dm-input"
+          class="messages-thread__input"
+          placeholder="Écrire un message…"
+          maxlength="1000"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" class="messages-thread__send" aria-label="Envoyer">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+      <% } else { %>
+      <div class="messages-thread__empty">
+        <i class="far fa-paper-plane messages-thread__empty-icon"></i>
+        <h2>Vos messages</h2>
+        <p>Envoyez des messages privés à un utilisateur de la communauté.</p>
+      </div>
+      <% } %>
+    </section>
+  </div>
+</main>
+
+<%- include('includes/footer') %>
