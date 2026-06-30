@@ -3,9 +3,14 @@ import RegistrationForm from './modules/registrationForm';
 import Likes from './modules/likes';
 import Comments from './modules/comments';
 import Messages from './modules/messages';
+import HeaderBadges from './modules/headerBadges';
 
 if (document.querySelector('#registration-form')) {
   new RegistrationForm();
+}
+
+if (document.querySelector('.header-badge')) {
+  new HeaderBadges();
 }
 
 if (document.querySelector('.messages-page')) {

@@ -1,5 +1,7 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
+const { emitBadgeCounts } = require('../utils/badgeNotifier');
 
 exports.create = async function(req, res) {
   try {
@@ -29,6 +31,22 @@ exports.create = async function(req, res) {
           author: created.author
         }
       });
+
+      if (!post.authorId.equals(req.session.user._id)) {
+        const preview =
+          created.body.length > 80
+            ? created.body.substring(0, 80) + '…'
+            : created.body;
+
+        await Notification.create({
+          type: 'comment',
+          recipientId: post.authorId,
+          actorId: req.session.user._id,
+          postId: req.params.id,
+          preview: preview
+        });
+        await emitBadgeCounts(io, post.authorId.toString());
+      }
     }
 
     res.json({ success: true, comment: created });

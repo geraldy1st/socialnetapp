@@ -152,8 +152,125 @@ a:hover {
 }
 
 .header-search-icon,
-.header-messages-icon {
+.header-messages-icon,
+.header-activity-icon {
   position: static;
+}
+
+.app-icon-btn--badge {
+  position: relative;
+}
+
+.header-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 999px;
+  border: 2px solid var(--surface);
+  pointer-events: none;
+}
+
+.header-badge--hidden {
+  display: none;
+}
+
+.notifications-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.notifications-card__title {
+  margin: 0;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+
+.notifications-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notifications-list__item {
+  border-bottom: 1px solid var(--border);
+}
+
+.notifications-list__item:last-child {
+  border-bottom: none;
+}
+
+.notifications-list__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.notifications-list__link:hover {
+  background: var(--bg);
+}
+
+.notifications-list__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.notifications-list__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifications-list__text {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.notifications-list__preview {
+  color: var(--text-muted);
+}
+
+.notifications-list__date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.notifications-list__icon {
+  color: var(--danger);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.notifications-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}
+
+.notifications-empty__icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  color: var(--border);
 }
 
 .app-avatar-link img,

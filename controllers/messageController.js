@@ -1,6 +1,7 @@
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { emitBadgeCounts } = require('../utils/badgeNotifier');
 
 async function renderMessagesScreen(req, res, options) {
   const conversations = await Conversation.findByUserId(req.session.user._id);
@@ -30,6 +31,9 @@ exports.thread = async function(req, res, next) {
       req.session.user._id
     );
     const messages = await Message.findByConversationId(req.params.conversationId);
+
+    await Conversation.markAsRead(req.params.conversationId, req.session.user._id);
+    await emitBadgeCounts(req.app.get('io'), req.session.user._id);
 
     await renderMessagesScreen(req, res, {
       activeConversation: conversation,
@@ -83,6 +87,16 @@ exports.searchUsers = async function(req, res) {
   }
 };
 
+exports.markRead = async function(req, res) {
+  try {
+    await Conversation.markAsRead(req.params.conversationId, req.session.user._id);
+    await emitBadgeCounts(req.app.get('io'), req.session.user._id);
+    res.json({ success: true });
+  } catch {
+    res.status(400).json({ error: 'Unable to mark as read.' });
+  }
+};
+
 exports.send = async function(req, res) {
   try {
     const message = new Message(
@@ -118,6 +132,8 @@ exports.send = async function(req, res) {
         conversationId: req.params.conversationId,
         message: saved
       });
+
+      await emitBadgeCounts(io, recipientId);
     }
 
     res.json({ success: true, message: saved });

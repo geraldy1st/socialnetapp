@@ -31,9 +31,18 @@
           <a href="#" class="header-search-icon app-icon-btn"
             ><i class="fas fa-search"></i
           ></a>
-          <a href="/messages" class="header-messages-icon app-icon-btn" title="Messages"
-            ><i class="far fa-paper-plane"></i
-          ></a>
+          <a href="/messages" class="header-messages-icon app-icon-btn app-icon-btn--badge" title="Messages">
+            <i class="far fa-paper-plane"></i>
+            <span class="header-badge header-badge--dm<%= unreadDmCount > 0 ? '' : ' header-badge--hidden' %>">
+              <%= unreadDmCount > 9 ? '9+' : unreadDmCount %>
+            </span>
+          </a>
+          <a href="/notifications" class="header-activity-icon app-icon-btn app-icon-btn--badge" title="Notifications">
+            <i class="far fa-heart"></i>
+            <span class="header-badge header-badge--activity<%= unreadActivityCount > 0 ? '' : ' header-badge--hidden' %>">
+              <%= unreadActivityCount > 9 ? '9+' : unreadActivityCount %>
+            </span>
+          </a>
           <a href="/create-post" class="app-icon-btn" title="Nouveau post"
             ><i class="far fa-plus-square"></i
           ></a>

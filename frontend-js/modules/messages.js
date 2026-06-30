@@ -123,6 +123,12 @@ export default class Messages {
     if (this.dmLog && this.dmLog.dataset.conversationId === conversationId) {
       const isSelf = message.senderId.toString() === this.currentUserId;
       this.appendMessage(message, isSelf);
+
+      if (!isSelf) {
+        axios
+          .post(`/messages/c/${conversationId}/read`, { _csrf: this._csrf })
+          .catch(() => {});
+      }
     }
 
     const item = this.messagesList

@@ -6,6 +6,7 @@ const followController = require('./controllers/followController');
 const likeController = require('./controllers/likeController');
 const commentController = require('./controllers/commentController');
 const messageController = require('./controllers/messageController');
+const notificationController = require('./controllers/notificationController');
 
 // user related routes
 router.get('/', userController.home);
@@ -88,6 +89,13 @@ router.post(
   commentController.create
 );
 
+// notification routes
+router.get(
+  '/notifications',
+  userController.mustBeLoggedIn,
+  notificationController.activityScreen
+);
+
 // messaging routes
 router.get(
   '/messages',
@@ -113,6 +121,11 @@ router.post(
   '/messages/c/:conversationId/send',
   userController.mustBeLoggedIn,
   messageController.send
+);
+router.post(
+  '/messages/c/:conversationId/read',
+  userController.mustBeLoggedIn,
+  messageController.markRead
 );
 
 // follow related routes

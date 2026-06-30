@@ -1,6 +1,9 @@
 const conversationsCollection = require('../db')
   .db()
   .collection('conversations');
+const messagesCollection = require('../db')
+  .db()
+  .collection('messages');
 const ObjectID = require('mongodb').ObjectID;
 const User = require('./User');
 
@@ -128,6 +131,54 @@ Conversation.updateLastMessage = function(conversationId, messageData) {
       }
     }
   );
+};
+
+Conversation.markAsRead = function(conversationId, userId) {
+  const userKey = userId.toString();
+  return conversationsCollection.updateOne(
+    {
+      _id: new ObjectID(conversationId),
+      participants: new ObjectID(userId)
+    },
+    {
+      $set: {
+        [`lastReadAt.${userKey}`]: new Date()
+      }
+    }
+  );
+};
+
+Conversation.getUnreadDmCount = function(userId) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      const visitorObjectId = new ObjectID(userId);
+      const userKey = userId.toString();
+      const conversations = await conversationsCollection
+        .find({ participants: visitorObjectId })
+        .toArray();
+
+      let total = 0;
+
+      for (const conversation of conversations) {
+        const lastRead =
+          conversation.lastReadAt && conversation.lastReadAt[userKey]
+            ? conversation.lastReadAt[userKey]
+            : new Date(0);
+
+        const count = await messagesCollection.countDocuments({
+          conversationId: conversation._id,
+          senderId: { $ne: visitorObjectId },
+          createdDate: { $gt: lastRead }
+        });
+
+        total += count;
+      }
+
+      resolve(total);
+    } catch {
+      resolve(0);
+    }
+  });
 };
 
 Conversation.isParticipant = function(conversationId, userId) {

@@ -1,0 +1,56 @@
+<%- include('includes/header') %>
+
+<main class="page-main">
+  <div class="container--narrow">
+    <%- include('includes/flash') %>
+
+    <div class="notifications-card">
+      <h1 class="notifications-card__title">Notifications</h1>
+
+      <% if (notifications.length) { %>
+      <ul class="notifications-list">
+        <% notifications.forEach(function(notification) { %>
+        <li class="notifications-list__item">
+          <a href="/post/<%= notification.postId %>" class="notifications-list__link">
+            <img
+              class="notifications-list__avatar"
+              src="<%= notification.actor.avatar %>"
+              alt="<%= notification.actor.username %>"
+            />
+            <div class="notifications-list__content">
+              <% if (notification.type === 'like') { %>
+              <p class="notifications-list__text">
+                <strong><%= notification.actor.username %></strong> a aimé votre publication
+              </p>
+              <% } else { %>
+              <p class="notifications-list__text">
+                <strong><%= notification.actor.username %></strong> a commenté :
+                <span class="notifications-list__preview"><%= notification.preview %></span>
+              </p>
+              <% } %>
+              <time class="notifications-list__date">
+                <%= notification.createdDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) %>
+              </time>
+            </div>
+            <span class="notifications-list__icon">
+              <% if (notification.type === 'like') { %>
+              <i class="fas fa-heart"></i>
+              <% } else { %>
+              <i class="fas fa-comment"></i>
+              <% } %>
+            </span>
+          </a>
+        </li>
+        <% }) %>
+      </ul>
+      <% } else { %>
+      <div class="notifications-empty">
+        <i class="far fa-heart notifications-empty__icon"></i>
+        <p>Aucune notification pour le moment.</p>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</main>
+
+<%- include('includes/footer') %>

@@ -23,7 +23,7 @@ let sessionOptions = session({
 app.use(sessionOptions);
 app.use(flash());
 
-app.use(function(req, res, next) {
+app.use(async function(req, res, next) {
   // make our markdown function available from within ejs templates
   res.locals.filterUserHTML = function(content) {
     return sanitizeHTML(markdown(content), {
@@ -68,6 +68,18 @@ app.use(function(req, res, next) {
   const postDisplay = require('./utils/postDisplay');
   res.locals.getPostExcerpt = postDisplay.getPostExcerpt;
   res.locals.getPostPageTitle = postDisplay.getPostPageTitle;
+
+  res.locals.unreadDmCount = 0;
+  res.locals.unreadActivityCount = 0;
+
+  if (req.session.user) {
+    try {
+      const { getBadgeCounts } = require('./utils/badgeNotifier');
+      const counts = await getBadgeCounts(req.session.user._id);
+      res.locals.unreadDmCount = counts.dmCount;
+      res.locals.unreadActivityCount = counts.activityCount;
+    } catch {}
+  }
 
   next();
 });

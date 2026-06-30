@@ -29,6 +29,10 @@ mongodb.connect(
         .db()
         .collection('messages')
         .createIndex({ conversationId: 1, createdDate: 1 });
+      await client
+        .db()
+        .collection('notifications')
+        .createIndex({ recipientId: 1, read: 1, createdDate: -1 });
     } catch (indexErr) {
       if (indexErr.code !== 85 && indexErr.code !== 86) {
         console.warn('Text index setup:', indexErr.message);
