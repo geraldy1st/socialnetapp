@@ -17,6 +17,10 @@ mongodb.connect(
         .db()
         .collection('likes')
         .createIndex({ postId: 1, userId: 1 }, { unique: true });
+      await client
+        .db()
+        .collection('comments')
+        .createIndex({ postId: 1, createdDate: 1 });
     } catch (indexErr) {
       if (indexErr.code !== 85 && indexErr.code !== 86) {
         console.warn('Text index setup:', indexErr.message);

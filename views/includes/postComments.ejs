@@ -1,0 +1,56 @@
+<section class="post-comments" data-post-id="<%= post._id %>">
+  <h3 class="post-comments__title">
+    Commentaires
+    <span class="post-comments__count" id="comment-count"><%= comments.length %></span>
+  </h3>
+
+  <ul class="post-comments__list" id="comment-list">
+    <% if (comments.length) { %>
+      <% comments.forEach(function(comment) { %>
+      <li class="post-comment" data-comment-id="<%= comment._id %>">
+        <a href="/profile/<%= comment.author.username %>" class="post-comment__avatar">
+          <img src="<%= comment.author.avatar %>" alt="<%= comment.author.username %>" />
+        </a>
+        <div class="post-comment__body">
+          <div class="post-comment__meta">
+            <a href="/profile/<%= comment.author.username %>" class="post-comment__author"
+              ><%= comment.author.username %></a
+            >
+            <time class="post-comment__date">
+              <%= comment.createdDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) %>
+            </time>
+          </div>
+          <p class="post-comment__text"><%= comment.body %></p>
+        </div>
+      </li>
+      <% }) %>
+    <% } else { %>
+      <li class="post-comments__empty" id="comment-empty">Aucun commentaire pour le moment.</li>
+    <% } %>
+  </ul>
+
+  <% if (user && canComment) { %>
+  <form class="post-comment-form" id="comment-form" data-post-id="<%= post._id %>">
+    <textarea
+      name="body"
+      id="comment-body"
+      class="form-control post-comment-form__input"
+      rows="2"
+      maxlength="500"
+      placeholder="Écrire un commentaire…"
+      required
+    ></textarea>
+    <button type="submit" class="btn btn-instagram btn-sm post-comment-form__submit">
+      Publier
+    </button>
+  </form>
+  <% } else if (!user) { %>
+  <p class="post-comments__login-hint">
+    <a href="/" class="interactive-link">Connectez-vous</a> pour commenter cette publication.
+  </p>
+  <% } else if (post.visibility === 'private') { %>
+  <p class="post-comments__login-hint">
+    Seuls les abonnés de @<%= post.author.username %> peuvent commenter cette publication privée.
+  </p>
+  <% } %>
+</section>

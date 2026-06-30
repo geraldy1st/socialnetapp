@@ -5,10 +5,10 @@
       </p>
     </footer>
 
+    <script src="/socket.io/socket.io.js"></script>
     <% if(user){ %>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <div id="chat-wrapper" class="chat-wrapper"></div>
-      <script src="/socket.io/socket.io.js"></script>
     <% } %>
 
     <script

@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const Comment = require('../models/Comment');
 const { processPostMedia } = require('../utils/processPostMedia');
 const { getPostPageTitle } = require('../utils/postDisplay');
 const sendgrid = require('@sendgrid/mail');
@@ -75,8 +76,13 @@ exports.apiCreate = function(req, res) {
 exports.viewSingle = async function(req, res) {
   try {
     let post = await Post.findSingleById(req.params.id, req.visitorId);
+    const comments = await Comment.findByPostId(req.params.id);
+    const canComment = await Post.canVisitorComment(post, req.visitorId);
+
     res.render('single-post-screen', {
       post: post,
+      comments: comments,
+      canComment: canComment,
       title: getPostPageTitle(post)
     });
   } catch {

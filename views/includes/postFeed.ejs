@@ -35,7 +35,7 @@
       <span class="post-card__date">
         <%= post.createdDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %>
       </span>
-      <%- include('includes/postLike', { post: post }) %>
+      <%- include('postLike', { post: post }) %>
     </div>
   </article>
   <% }) %>

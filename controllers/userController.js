@@ -163,14 +163,18 @@ exports.register = function(req, res) {
     });
 };
 
-exports.home = async function(req, res) {
-  const visitorId = req.session.user ? req.session.user._id : 0;
-  let posts = await Post.getHomeFeed(visitorId);
+exports.home = async function(req, res, next) {
+  try {
+    const visitorId = req.session.user ? req.session.user._id : 0;
+    let posts = await Post.getHomeFeed(visitorId);
 
-  if (req.session.user) {
-    res.render('home-dashboard', { posts: posts });
-  } else {
-    res.render('home-guest', { posts: posts });
+    if (req.session.user) {
+      res.render('home-dashboard', { posts: posts });
+    } else {
+      res.render('home-guest', { posts: posts });
+    }
+  } catch (err) {
+    next(err);
   }
 };
 

@@ -4,6 +4,7 @@ const userController = require('./controllers/userController');
 const postController = require('./controllers/postController');
 const followController = require('./controllers/followController');
 const likeController = require('./controllers/likeController');
+const commentController = require('./controllers/commentController');
 
 // user related routes
 router.get('/', userController.home);
@@ -79,6 +80,11 @@ router.post(
   '/post/:id/like',
   userController.mustBeLoggedIn,
   likeController.toggle
+);
+router.post(
+  '/post/:id/comment',
+  userController.mustBeLoggedIn,
+  commentController.create
 );
 
 // follow related routes

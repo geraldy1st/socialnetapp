@@ -10,7 +10,14 @@ const Follow = require('./Follow');
 const { deletePostMedia } = require('../utils/processPostMedia');
 const sanitizeHTML = require('sanitize-html');
 
-const PUBLIC_VISIBILITY = { $or: [{ visibility: 'public' }, { visibility: { $exists: false } }] };
+const PUBLIC_VISIBILITY = {
+  $or: [
+    { visibility: 'public' },
+    { visibility: { $exists: false } },
+    { visibility: null },
+    { visibility: '' }
+  ]
+};
 
 let Post = function(data, userid, requestedPostId) {
   this.data = data;
@@ -196,6 +203,20 @@ Post.getGlobalVisibilityMatch = async function(visitorId) {
 };
 
 Post.assertVisitorCanView = async function(post, visitorId) {
+  const visibility = post.visibility || 'public';
+
+  if (visibility !== 'private') {
+    return true;
+  }
+
+  return Post.canVisitorViewPrivatePosts(post.authorId, visitorId);
+};
+
+Post.canVisitorComment = async function(post, visitorId) {
+  if (!visitorId || visitorId === 0) {
+    return false;
+  }
+
   const visibility = post.visibility || 'public';
 
   if (visibility !== 'private') {

@@ -9,7 +9,7 @@
   <span class="like-button__count"><%= post.likeCount || 0 %></span>
 </button>
 <% } else { %>
-<span class="like-button like-button--readonly">
+<span class="like-button like-button--readonly" data-post-id="<%= post._id %>">
   <i class="far fa-heart"></i>
   <span class="like-button__count"><%= post.likeCount || 0 %></span>
 </span>

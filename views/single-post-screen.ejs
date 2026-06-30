@@ -53,6 +53,8 @@
       <div class="post-detail__likes">
         <%- include('includes/postLike', { post: post }) %>
       </div>
+
+      <%- include('includes/postComments', { post: post, comments: comments, canComment: canComment }) %>
     </article>
   </div>
 </main>

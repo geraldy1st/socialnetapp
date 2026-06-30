@@ -109,6 +109,7 @@ app.use(function(err, req, res, next) {
 const server = require('http').createServer(app);
 
 const io = require('socket.io')(server);
+app.set('io', io);
 
 io.use(function(socket, next) {
   sessionOptions(socket.request, socket.request.res, next);
