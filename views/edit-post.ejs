@@ -10,28 +10,40 @@
 
     <div class="form-card">
       <h2 class="h5 font-weight-bold mb-4">Modifier la publication</h2>
-      <form action="/post/<%= post._id %>/edit" method="POST">
-        <div class="form-group">
-          <label for="post-title">Titre</label>
-          <input
-            required
-            name="title"
-            value="<%= post.title %>"
-            id="post-title"
-            class="form-control form-control-title"
-            type="text"
-            autocomplete="off"
-          />
+      <form
+        action="/post/<%= post._id %>/edit"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <% if (post.media && post.media.length) { %>
+        <div class="post-edit-current-media">
+          <%- include('includes/postMedia', { post: post }) %>
+          <input type="hidden" name="removeMedia" id="remove-media" value="false" />
+          <button type="button" class="btn btn-instagram-outline btn-sm" id="remove-media-btn">
+            Supprimer le média
+          </button>
         </div>
+        <% } %>
 
         <div class="form-group">
-          <label for="post-body">Contenu</label>
+          <label for="post-body">Légende</label>
           <textarea
-            required
             name="body"
             id="post-body"
             class="body-content tall-textarea form-control"
+            placeholder="Écrivez une légende…"
           ><%= post.body %></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="post-media">Remplacer par une nouvelle image ou vidéo</label>
+          <input
+            type="file"
+            name="media"
+            id="post-media"
+            class="form-control-file profile-edit-file"
+            accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+          />
         </div>
 
         <div class="form-group">
@@ -70,5 +82,18 @@
     </div>
   </div>
 </main>
+
+<script>
+  (function () {
+    var btn = document.getElementById('remove-media-btn');
+    var field = document.getElementById('remove-media');
+    if (btn && field) {
+      btn.addEventListener('click', function () {
+        field.value = 'true';
+        btn.closest('form').submit();
+      });
+    }
+  })();
+</script>
 
 <%- include('includes/footer') %>

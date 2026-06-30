@@ -88,6 +88,30 @@
         </div>
 
         <div class="form-group">
+          <label>Apparence</label>
+          <div class="theme-options">
+            <label class="theme-option">
+              <input
+                type="radio"
+                name="theme"
+                value="light"
+                <%= profileUser.theme !== 'dark' ? 'checked' : '' %>
+              />
+              <span><i class="fas fa-sun"></i> Mode clair</span>
+            </label>
+            <label class="theme-option">
+              <input
+                type="radio"
+                name="theme"
+                value="dark"
+                <%= profileUser.theme === 'dark' ? 'checked' : '' %>
+              />
+              <span><i class="fas fa-moon"></i> Mode sombre</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label for="password-edit">Nouveau mot de passe</label>
           <input
             name="password"

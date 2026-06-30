@@ -6,7 +6,6 @@
 
     <article class="post-detail">
       <div class="post-detail__header">
-        <h1 class="post-detail__title"><%= post.title %></h1>
         <% if (post.isVisitorOwner) { %>
         <div class="post-detail__actions">
           <a href="/post/<%= post._id %>/edit" title="Modifier"
@@ -43,8 +42,16 @@
         <% } %>
       </div>
 
+      <%- include('includes/postMedia', { post: post }) %>
+
+      <% if (post.body && post.body.trim()) { %>
       <div class="post-detail__body body-content">
         <%- filterUserHTML(post.body) %>
+      </div>
+      <% } %>
+
+      <div class="post-detail__likes">
+        <%- include('includes/postLike', { post: post }) %>
       </div>
     </article>
   </div>

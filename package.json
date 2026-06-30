@@ -11,7 +11,7 @@
         "start": "node db.js",
         "predeploy": "npm run build",
         "deploy": "gh-pages -d build",
-        "build": "webpack --mode production",
+        "build": "NODE_OPTIONS=--openssl-legacy-provider webpack --mode production",
         "watch": "nodemon db --ignore frontend-js --ignore public/ & webpack --watch",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
@@ -41,6 +41,7 @@
         "multer": "^2.2.0",
         "nodemon": "^1.19.2",
         "sanitize-html": "^1.20.1",
+        "sharp": "^0.35.2",
         "socket.io": "^2.3.0",
         "validator": "^11.1.0",
         "webpack": "^4.41.0",

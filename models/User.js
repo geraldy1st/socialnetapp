@@ -245,10 +245,13 @@ User.prototype.cleanUpProfileUpdate = function() {
     this.data.password = '';
   }
 
+  const theme = this.data.theme === 'dark' ? 'dark' : 'light';
+
   this.data = {
     username: this.data.username.trim().toLowerCase(),
     email: this.data.email.trim().toLowerCase(),
-    password: this.data.password
+    password: this.data.password,
+    theme: theme
   };
 };
 
@@ -331,7 +334,8 @@ User.prototype.updateProfile = function(userId, avatarOptions) {
 
       let updateFields = {
         username: this.data.username,
-        email: this.data.email
+        email: this.data.email,
+        theme: this.data.theme
       };
 
       if (this.data.password.length > 0) {
@@ -365,7 +369,8 @@ User.prototype.updateProfile = function(userId, avatarOptions) {
       resolve({
         username: this.data.username,
         email: this.data.email,
-        avatar: this.avatar
+        avatar: this.avatar,
+        theme: this.data.theme
       });
     } catch {
       reject(['Unable to update profile.']);

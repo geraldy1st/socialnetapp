@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require('./controllers/userController');
 const postController = require('./controllers/postController');
 const followController = require('./controllers/followController');
+const likeController = require('./controllers/likeController');
 
 // user related routes
 router.get('/', userController.home);
@@ -74,6 +75,11 @@ router.post(
   postController.delete
 );
 router.post('/search', postController.search);
+router.post(
+  '/post/:id/like',
+  userController.mustBeLoggedIn,
+  likeController.toggle
+);
 
 // follow related routes
 router.post(

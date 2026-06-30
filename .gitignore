@@ -2,3 +2,5 @@
 node_modules
 public/uploads/avatars/*
 !public/uploads/avatars/.gitkeep
+public/uploads/posts/*
+!public/uploads/posts/.gitkeep

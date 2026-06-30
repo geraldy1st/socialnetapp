@@ -7,6 +7,7 @@ const followsCollection = require('../db')
 const ObjectID = require('mongodb').ObjectID;
 const User = require('./User');
 const Follow = require('./Follow');
+const { deletePostMedia } = require('../utils/processPostMedia');
 const sanitizeHTML = require('sanitize-html');
 
 const PUBLIC_VISIBILITY = { $or: [{ visibility: 'public' }, { visibility: { $exists: false } }] };
@@ -16,6 +17,8 @@ let Post = function(data, userid, requestedPostId) {
   this.errors = [];
   this.userid = userid;
   this.requestedPostId = requestedPostId;
+  this.media = null;
+  this.removeMedia = false;
 };
 
 Post.prototype.parseVisibility = function() {
@@ -23,19 +26,11 @@ Post.prototype.parseVisibility = function() {
 };
 
 Post.prototype.cleanUp = function() {
-  if (typeof this.data.title != 'string') {
-    this.data.title = '';
-  }
   if (typeof this.data.body != 'string') {
     this.data.body = '';
   }
 
-  // get rid of any bogus properties
   this.data = {
-    title: sanitizeHTML(this.data.title.trim(), {
-      allowedTags: [],
-      allowedAttributes: {}
-    }),
     body: sanitizeHTML(this.data.body.trim(), {
       allowedTags: [],
       allowedAttributes: {}
@@ -44,21 +39,18 @@ Post.prototype.cleanUp = function() {
     createdDate: new Date(),
     author: ObjectID(this.userid)
   };
+
+  if (this.media && this.media.length) {
+    this.data.media = this.media;
+  }
 };
 
 Post.prototype.cleanUpForUpdate = function() {
-  if (typeof this.data.title != 'string') {
-    this.data.title = '';
-  }
   if (typeof this.data.body != 'string') {
     this.data.body = '';
   }
 
   this.data = {
-    title: sanitizeHTML(this.data.title.trim(), {
-      allowedTags: [],
-      allowedAttributes: {}
-    }),
     body: sanitizeHTML(this.data.body.trim(), {
       allowedTags: [],
       allowedAttributes: {}
@@ -68,11 +60,13 @@ Post.prototype.cleanUpForUpdate = function() {
 };
 
 Post.prototype.validate = function() {
-  if (this.data.title == '') {
-    this.errors.push('You must provide a title.');
-  }
-  if (this.data.body == '') {
-    this.errors.push('You must provide post content.');
+  const hasBody = this.data.body && this.data.body.trim() !== '';
+  const hasMedia = this.media && this.media.length;
+
+  if (!hasBody && !hasMedia) {
+    this.errors.push(
+      'Vous devez ajouter une légende ou un média (image/vidéo).'
+    );
   }
 };
 
@@ -81,7 +75,6 @@ Post.prototype.create = function() {
     this.cleanUp();
     this.validate();
     if (!this.errors.length) {
-      // save post into database
       postsCollection
         .insertOne(this.data)
         .then(info => {
@@ -102,8 +95,7 @@ Post.prototype.update = function() {
     try {
       let post = await Post.findSingleById(this.requestedPostId, this.userid);
       if (post.isVisitorOwner) {
-        // actually update the db
-        let status = await this.actuallyUpdate();
+        let status = await this.actuallyUpdate(post);
         resolve(status);
       } else {
         reject();
@@ -114,20 +106,40 @@ Post.prototype.update = function() {
   });
 };
 
-Post.prototype.actuallyUpdate = function() {
+Post.prototype.actuallyUpdate = function(existingPost) {
   return new Promise(async (resolve, reject) => {
     this.cleanUpForUpdate();
+
+    if (this.media && this.media.length) {
+      this.data.media = this.media;
+    } else if (!this.removeMedia && existingPost.media) {
+      this.data.media = existingPost.media;
+    }
+
+    this.media = this.data.media || null;
     this.validate();
+
     if (!this.errors.length) {
+      const updateFields = {
+        body: this.data.body,
+        visibility: this.data.visibility
+      };
+
+      if (this.media && this.media.length) {
+        updateFields.media = this.media;
+        if (existingPost.media) {
+          deletePostMedia(existingPost.media);
+        }
+      } else if (this.removeMedia) {
+        updateFields.media = [];
+        if (existingPost.media) {
+          deletePostMedia(existingPost.media);
+        }
+      }
+
       await postsCollection.findOneAndUpdate(
         { _id: new ObjectID(this.requestedPostId) },
-        {
-          $set: {
-            title: this.data.title,
-            body: this.data.body,
-            visibility: this.data.visibility
-          }
-        }
+        { $set: updateFields }
       );
       resolve('success');
     } else {
@@ -193,6 +205,44 @@ Post.assertVisitorCanView = async function(post, visitorId) {
   return Post.canVisitorViewPrivatePosts(post.authorId, visitorId);
 };
 
+Post.decoratePosts = function(posts, visitorId) {
+  const visitorObjectId =
+    visitorId && visitorId !== 0 ? new ObjectID(visitorId) : null;
+
+  return posts.map(function(post) {
+    if (visitorId && visitorId !== 0) {
+      post.isVisitorOwner = post.authorId.equals(visitorId);
+    } else {
+      post.isVisitorOwner = false;
+    }
+
+    post.author = {
+      username: post.author.username,
+      avatar: new User(post.author, true).avatar
+    };
+
+    if (!post.visibility) {
+      post.visibility = 'public';
+    }
+
+    post.likeCount = post.likeDocs ? post.likeDocs.length : 0;
+    post.isLikedByVisitor = false;
+
+    if (visitorObjectId && post.likeDocs && post.likeDocs.length) {
+      post.isLikedByVisitor = post.likeDocs.some(function(like) {
+        return like.userId.equals(visitorObjectId);
+      });
+    }
+
+    if (!post.media) {
+      post.media = [];
+    }
+
+    delete post.likeDocs;
+    return post;
+  });
+};
+
 Post.reusablePostQuery = function(uniqueOperations, visitorId) {
   return new Promise(async function(resolve, reject) {
     try {
@@ -206,38 +256,29 @@ Post.reusablePostQuery = function(uniqueOperations, visitorId) {
           }
         },
         {
+          $lookup: {
+            from: 'likes',
+            localField: '_id',
+            foreignField: 'postId',
+            as: 'likeDocs'
+          }
+        },
+        {
           $project: {
             title: 1,
             body: 1,
+            media: 1,
             visibility: 1,
             createdDate: 1,
             authorId: '$author',
+            likeDocs: 1,
             author: { $arrayElemAt: ['$authorDocument', 0] }
           }
         }
       ]);
 
       let posts = await postsCollection.aggregate(aggOperations).toArray();
-
-      posts = posts.map(function(post) {
-        if (visitorId && visitorId !== 0) {
-          post.isVisitorOwner = post.authorId.equals(visitorId);
-        } else {
-          post.isVisitorOwner = false;
-        }
-
-        post.author = {
-          username: post.author.username,
-          avatar: new User(post.author, true).avatar
-        };
-
-        if (!post.visibility) {
-          post.visibility = 'public';
-        }
-
-        return post;
-      });
-
+      posts = Post.decoratePosts(posts, visitorId);
       resolve(posts);
     } catch (err) {
       reject(err);
@@ -293,6 +334,9 @@ Post.delete = function(postIdToDelete, currentUserId) {
     try {
       let post = await Post.findSingleById(postIdToDelete, currentUserId);
       if (post.isVisitorOwner) {
+        if (post.media && post.media.length) {
+          deletePostMedia(post.media);
+        }
         await postsCollection.deleteOne({ _id: new ObjectID(postIdToDelete) });
         resolve();
       } else {
@@ -342,12 +386,7 @@ Post.search = function(searchTerm, visitorId) {
             {
               $match: {
                 $and: [
-                  {
-                    $or: [
-                      { title: { $regex: escaped, $options: 'i' } },
-                      { body: { $regex: escaped, $options: 'i' } }
-                    ]
-                  },
+                  { body: { $regex: escaped, $options: 'i' } },
                   visibilityMatch
                 ]
               }
@@ -377,14 +416,12 @@ Post.countPostsByAuthor = function(id, visitorId) {
 };
 
 Post.getFeed = async function(id) {
-  // create an array of the user ids that the current user follows
   let followedUsers = await followsCollection
     .find({ authorId: new ObjectID(id) })
     .toArray();
   followedUsers = followedUsers.map(function(followDoc) {
     return followDoc.followedId;
   });
-  // look for posts where the author is in the above array of followed users
   return Post.reusablePostQuery([
     { $match: { author: { $in: followedUsers } } },
     { $sort: { createdDate: -1 } }

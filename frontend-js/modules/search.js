@@ -73,7 +73,7 @@ export default class Search {
           }" class="search-results-card__item">
           <img class="avatar-tiny" src="${post.author.avatar}" alt="">
           <div>
-            <strong>${post.title}</strong>
+            <strong>${post.body && post.body.trim() ? post.body.substring(0, 60) : post.media && post.media.length ? (post.media[0].type === 'video' ? 'Vidéo' : 'Photo') : 'Publication'}</strong>
             <span class="meta">${post.author.username} · ${postDate.toLocaleDateString('fr-FR')}</span>
           </div>
         </a>`;

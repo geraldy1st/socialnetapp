@@ -61,6 +61,14 @@ app.use(function(req, res, next) {
 
   // make user session data available from within view templates
   res.locals.user = req.session.user;
+
+  res.locals.theme =
+    req.session.user && req.session.user.theme === 'dark' ? 'dark' : 'light';
+
+  const postDisplay = require('./utils/postDisplay');
+  res.locals.getPostExcerpt = postDisplay.getPostExcerpt;
+  res.locals.getPostPageTitle = postDisplay.getPostPageTitle;
+
   next();
 });
 
@@ -70,8 +78,9 @@ app.use(express.static('public'));
 app.set('views', 'views');
 app.set('view engine', 'ejs');
 
-// Parse multipart profile edits before CSRF so _csrf is available in req.body
+// Parse multipart uploads before CSRF so _csrf is available in req.body
 app.use(require('./middleware/prepareProfileEditUpload'));
+app.use(require('./middleware/preparePostUpload'));
 
 app.use(csrf());
 

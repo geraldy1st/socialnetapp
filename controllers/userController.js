@@ -89,7 +89,8 @@ exports.login = function(req, res) {
       req.session.user = {
         avatar: user.avatar,
         username: user.data.username,
-        _id: user.data._id
+        _id: user.data._id,
+        theme: user.data.theme || 'light'
       };
       req.session.save(function() {
         res.redirect('/');
@@ -145,7 +146,8 @@ exports.register = function(req, res) {
       req.session.user = {
         username: user.data.username,
         avatar: user.avatar,
-        _id: user.data._id
+        _id: user.data._id,
+        theme: 'light'
       };
       req.session.save(function() {
         res.redirect('/');
@@ -265,7 +267,8 @@ exports.viewProfileEditScreen = async function(req, res) {
         username: userDoc.username,
         email: userDoc.email,
         avatar: userWithAvatar.avatar,
-        hasCustomAvatar: !!userDoc.avatarUrl
+        hasCustomAvatar: !!userDoc.avatarUrl,
+        theme: userDoc.theme || 'light'
       }
     });
   } catch {
@@ -294,6 +297,7 @@ exports.updateProfile = function(req, res) {
     .then(function(updatedUser) {
       req.session.user.username = updatedUser.username;
       req.session.user.avatar = updatedUser.avatar;
+      req.session.user.theme = updatedUser.theme;
       req.flash('success', 'Profil mis à jour avec succès.');
       req.session.save(() => res.redirect(`/profile/${updatedUser.username}`));
     })

@@ -12,10 +12,11 @@ mongodb.connect(
     }
 
     try {
+      await client.db().collection('posts').createIndex({ body: 'text' });
       await client
         .db()
-        .collection('posts')
-        .createIndex({ title: 'text', body: 'text' });
+        .collection('likes')
+        .createIndex({ postId: 1, userId: 1 }, { unique: true });
     } catch (indexErr) {
       if (indexErr.code !== 85 && indexErr.code !== 86) {
         console.warn('Text index setup:', indexErr.message);

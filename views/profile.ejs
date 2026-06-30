@@ -7,11 +7,17 @@
 
     <div class="profile-grid">
       <% posts.forEach(function(post) { %>
-      <a href="/post/<%= post._id %>" class="profile-grid__item">
+      <a href="/post/<%= post._id %>" class="profile-grid__item <%= post.media && post.media.length ? 'profile-grid__item--media' : '' %>">
         <% if (post.visibility === 'private' && isVisitorsProfile) { %>
         <span class="profile-grid__badge"><i class="fas fa-lock"></i></span>
         <% } %>
-        <span class="profile-grid__title"><%= post.title %></span>
+        <% if (post.media && post.media.length && post.media[0].type === 'image') { %>
+        <img class="profile-grid__thumb" src="<%= post.media[0].url %>" alt="" />
+        <% } else if (post.media && post.media.length && post.media[0].type === 'video') { %>
+        <span class="profile-grid__title"><i class="fas fa-play"></i> Vidéo</span>
+        <% } else { %>
+        <span class="profile-grid__title"><%= getPostExcerpt(post, 40) %></span>
+        <% } %>
       </a>
       <% }) %>
     </div>

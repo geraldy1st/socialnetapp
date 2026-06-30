@@ -6,29 +6,30 @@
 
     <div class="form-card">
       <h2 class="h5 font-weight-bold mb-4">Nouvelle publication</h2>
-      <form action="/create-post" method="POST">
+      <form action="/create-post" method="POST" enctype="multipart/form-data">
         <div class="form-group">
-          <label for="post-title">Titre</label>
-          <input
-            required
-            name="title"
-            id="post-title"
-            class="form-control form-control-title"
-            type="text"
-            placeholder="Donnez un titre à votre post"
-            autocomplete="off"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="post-body">Contenu</label>
+          <label for="post-body">Légende</label>
           <textarea
-            required
             name="body"
             id="post-body"
             class="body-content tall-textarea form-control"
-            placeholder="Écrivez votre publication…"
+            placeholder="Écrivez une légende (optionnel si vous ajoutez un média)…"
           ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="post-media">Image ou vidéo</label>
+          <input
+            type="file"
+            name="media"
+            id="post-media"
+            class="form-control-file profile-edit-file"
+            accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+          />
+          <small class="text-muted d-block mt-1">
+            Images compressées automatiquement (WebP). Vidéos MP4/WebM — 15 Mo max.
+            Stockage local gratuit.
+          </small>
         </div>
 
         <div class="form-group">
