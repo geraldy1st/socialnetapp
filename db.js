@@ -41,6 +41,9 @@ mongodb.connect(
 
     module.exports = client;
     const app = require('./app');
-    app.listen(process.env.PORT);
+    const port = process.env.PORT || 3000;
+    app.listen(port, '0.0.0.0', function() {
+      console.log(`SocialNet running on port ${port}`);
+    });
   }
 );

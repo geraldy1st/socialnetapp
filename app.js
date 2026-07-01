@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
@@ -7,17 +9,29 @@ const csrf = require('csurf');
 const app = express();
 const sanitizeHTML = require('sanitize-html');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.use('/api', require('./router-api'));
 
 let sessionOptions = session({
-  secret: 'JavaScript is sooooooooo coool',
+  secret:
+    process.env.SESSION_SECRET || 'JavaScript is sooooooooo coool-dev-only',
   store: new MongoStore({ client: require('./db') }),
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true }
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax'
+  }
 });
 
 app.use(sessionOptions);
